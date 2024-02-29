@@ -2,11 +2,12 @@ import asyncHandler from "../utils/asynchandler.js";
 import ApiError from "../utils/ApiError.js";
 import User from "../models/user.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js"
+import ApiResponse from "../utils/ApiResponse.js";
 
 
 const registerUser=asyncHandler(async(req,res)=>{
 
-    // const {fullname, username, email, password}=req.body
+     const {fullname, username, email, password}=req.body
     // console.log("email",email) 
 
 
@@ -23,7 +24,7 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"enter a password")
     }
 
-    const existinguser=User.findOne({
+    const existinguser= await User.findOne({
         $or:[ {username} , {email} ]
     })
 
@@ -31,8 +32,8 @@ const registerUser=asyncHandler(async(req,res)=>{
         throw new ApiError(400,"User already exists")
     }
 
-    const avatarlocalpath=req.files?.avatar[0]?.path
-    const coverimagelocalpath=req.files?.coverimage[0]?.path
+    const avatarlocalpath=await req.files?.avatar[0]?.path
+    const coverimagelocalpath=await req.files?.coverimage[0]?.path
 
     if(!avatarlocalpath){
         throw new ApiError(400,"not found")
@@ -43,10 +44,26 @@ const registerUser=asyncHandler(async(req,res)=>{
 
     const avatar=await uploadOnCloudinary(avatarlocalpath)
     const coverImage=await uploadOnCloudinary(coverimagelocalpath)
+    
 
     if(!avatar){
         throw new ApiError(400,"upload an avatar")
     }
+
+    const user= await User.create({
+        fullname,
+        avatar: avatar.url,
+        coverimage: coverImage?.url || "",
+        email,
+        password
+    })
+
+    const CreatedUser=await User.findById(user_id).select("-password -refreshToken")
+
+    if(CreatedUser){
+        return new ApiResponse(200,CreatedUser);
+    }
+
 
 })
 
