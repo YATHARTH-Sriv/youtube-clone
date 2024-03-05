@@ -1,20 +1,36 @@
 import { Router } from "express";
-import registerUser from "../controllers/user.controller.js";
+import {registerUser,loginUser,logoutUser,refreshAccessToken} from "../controllers/user.controller.js";
 import  upload  from "../middlewares/multer.middleware.js";
+import VerifyJWT from "../middlewares/authmiddleware.js";
 
-const route=Router()
+const router=Router()
 
-route.route("/register").post(upload.fields([
-      {
-            name: "avatar",
-            maxcount:1
-      },
-      {
-            name:"coverimage",
-            maxcount:1
-      }
+router.route("/register").post(
+      upload.fields([
+          {
+              name: "avatar",
+              maxCount: 1
+          }, 
+          {
+              name: "coverImage",
+              maxCount: 1
+          }
+      ]),
+      registerUser
+      )
+  
+router.route("/login").post(loginUser)
 
-    ])
-,registerUser)
+router.route("/logout").post(VerifyJWT, logoutUser)
+router.route("/refresh-token").post(refreshAccessToken)
+router.route("/update-password").post(VerifyJWT , updatepassword)
+router.route("/current-user").get(VerifyJWT,CurrentUser)
+router.route("/Update-Details").post(VerifyJWT,UpdateDetails)
+router.route("/Update-Avatar-Image").post(VerifyJWT,upload.single("avatar"),UpdateAvatarImage)
+router.route("/Update-Cover-Image").post(VerifyJWT,upload.single("coverimage"),UpdateCoverImage)
+router.route("/c/:username").get(VerifyJWT, getAccountDetails)
+router.route("/history").get(VerifyJWT, getWatchHistory)
 
-export default route;
+
+
+export default router;
